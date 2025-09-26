@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Phishing Detector</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+      --card-bg: #ffffff;
+      --primary: #4361ee;
+      --secondary: #3bc9db;
+      --success: #2b9348;
+      --danger: #d00000;
+      --text-dark: #333;
+      --muted: #666;
+      --radius: 14px;
+      --shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    .container {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      max-width: 700px;
+      width: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 { margin-top: 0; font-size: 28px; color: var(--primary); }
+    .subtitle { margin: 10px 0 30px; color: var(--muted); font-size: 15px; }
+    form { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+    input[type="text"] { flex: 1; padding: 12px 14px; border-radius: var(--radius); border: 2px solid #eee; font-size: 15px; outline: none; transition: 0.2s; }
+    input[type="text"]:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(59,201,219,0.25); }
+    button { padding: 12px 20px; border-radius: var(--radius); border: none; background: linear-gradient(90deg, var(--primary), var(--secondary)); color: white; font-weight: 600; cursor: pointer; font-size: 15px; transition: all 0.2s; }
+    button:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .result { margin-top: 20px; padding: 18px; border-radius: var(--radius); background: #f1f5f9; text-align: left; }
+    .badge { display: inline-block; padding: 8px 14px; border-radius: 999px; font-weight: 600; margin-bottom: 10px; }
+    .badge.legit { background: #d8f3dc; color: var(--success); }
+    .badge.phish { background: #ffe3e3; color: var(--danger); }
+    a.result-link { color: var(--primary); text-decoration: none; }
+    a.result-link:hover { text-decoration: underline; }
+    .meta { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔎 Phishing URL Detector</h1>
+    <p class="subtitle">Paste a link and check if it’s suspicious. Simple, fast, and colorful!</p>
+
+    <form method="post">
+      <input type="text" name="url" placeholder="https://example.com/login" required value="{{ url|default('') }}">
+      <button type="submit">Check</button>
+    </form>
+
+    {% if result %}
+    <div class="result">
+      <div class="badge {% if is_legit %}legit{% elif is_legit == false %}phish{% else %}phish{% endif %}">
+        {{ result }}
+      </div>
+      <p><strong>URL:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="result-link">{{ url }}</a></p>
+      {% if score is not none %}
+        <p class="meta"><strong>Phishing probability:</strong> {{ score }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</body>
+                                 </html>
