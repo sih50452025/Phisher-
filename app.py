@@ -1,21 +1,19 @@
 # app.py
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
+import os
 import pickle
 import numpy as np
 import re
 from urllib.parse import urlparse
-import os
-import pickle
-import subprocess
 
-MODEL_PATH="phishing.pkl"
-if not os.path.exists(MODEL_PATH):
-  subprocess.run(["python","model.py"],check=True)
-with open(MODEL_PATH,"rb") as f:
-  model=pickle.load(f)
+# local helper to train/save model if missing
+from model import train_and_save, DEFAULT_MODEL_PATH
+
+MODEL_PATH = DEFAULT_MODEL_PATH
+
 # ---------------- Trusted Domains ----------------
 TRUSTED_DOMAINS = [
-    "google.com", "github.com","instagram.com" ,"microsoft.com", "apple.com",
+    "google.com", "github.com", "instagram.com", "microsoft.com", "apple.com",
     "facebook.com", "amazon.com", "wikipedia.org", "yahoo.com"
 ]
 
@@ -25,13 +23,24 @@ SUSPICIOUS_KEYWORDS = [
     "confirm", "paypal", "signin", "password", "credential"
 ]
 
-# ---------------- Features ----------------
+# ---------------- Feature columns (same order as model.feature_columns expected) ----------------
 FEATURE_COLS = [
     'length_url','qty_dot_url','qty_hyphen_url','qty_slash_url','qty_questionmark_url','qty_equal_url',
     'qty_at_url','qty_and_url','qty_exclamation_url','qty_hashtag_url','qty_dollar_url','qty_percent_url',
     'qty_tld_url','qty_dot_domain','domain_length','subdomain_count','subdomain_length','query_count',
     'has_ip','https_presence'
 ]
+
+def ensure_model():
+    """Load model; if missing, train via model.train_and_save(). Returns (model, feature_columns)."""
+    if not os.path.exists(MODEL_PATH):
+        print(f"{MODEL_PATH} not found — training model now.")
+        train_and_save(out_path=MODEL_PATH)
+    with open(MODEL_PATH, "rb") as f:
+        obj = pickle.load(f)
+    model = obj.get("model")
+    feature_columns = obj.get("feature_columns", FEATURE_COLS)
+    return model, feature_columns
 
 def extract_features_from_url(url):
     u = url.strip()
@@ -89,12 +98,11 @@ def extract_features_from_url(url):
         'has_ip': has_ip,
         'https_presence': https_presence
     }
+    # return feature vector in the specified order
     return [feats[c] for c in FEATURE_COLS], host, path, query
 
-# ---------------- Load Model ----------------
-with open("phishing.pkl", "rb") as f:
-    model_obj = pickle.load(f)
-model = model_obj['model']
+# Load or train model
+model, model_feature_columns = ensure_model()
 
 # ---------------- Flask App ----------------
 app = Flask(__name__)
@@ -104,39 +112,48 @@ def index():
     result = None
     score = None
     url = ""
+    is_legit = None
     if request.method == "POST":
-        url = request.form.get("url", "")
+        url = request.form.get("url", "").strip()
         if url:
             feats, host, path, query = extract_features_from_url(url)
 
             # ---- Rule 1: Trusted domain override ----
             for trusted in TRUSTED_DOMAINS:
                 if host.endswith(trusted):
-                    result = f"safe ✅ (trusted domain: {trusted})"
+                    result = f"Legitimate ✅ (trusted: {trusted})"
                     score = 0.0
-                    return render_template("index.html", result=result, score=score, url=url)
+                    is_legit = True
+                    return render_template("index.html", result=result, score=score, url=url, is_legit=is_legit)
 
             # ---- Rule 2: Suspicious keyword boost ----
             for word in SUSPICIOUS_KEYWORDS:
                 if word in url.lower():
-                    result = f"Phishing 🚨 (suspicious keyword: {word})"
+                    result = f"Phishing 🚨 (keyword: {word})"
                     score = 1.0
-                    return render_template("index.html", result=result, score=score, url=url)
+                    is_legit = False
+                    return render_template("index.html", result=result, score=score, url=url, is_legit=is_legit)
 
             # ---- Otherwise, use ML model ----
-            feats[0] = np.log1p(feats[0])  # log transform length_url
-            X = np.array(feats).reshape(1, -1)
-            pred = model.predict(X)[0]
-            try:
-                prob = model.predict_proba(X)[0][1]
-                score = float(round(prob, 4))
-            except Exception:
-                score = None
-            result = "Phishing 🚨" if int(pred) == 1 else "Legitimate ✅"
+            # apply same transform as used in your previous logic: log1p on length_url
+            feats_copy = feats.copy()
+            feats_copy[0] = np.log1p(feats_copy[0])
+            X = np.array(feats_copy).reshape(1, -1)
 
-    return render_template("index.html", result=result, score=score, url=url)
+            try:
+                pred = int(model.predict(X)[0])
+                prob = None
+                if hasattr(model, "predict_proba"):
+                    prob = float(round(model.predict_proba(X)[0][1], 4))
+                    score = prob
+                result = "Phishing 🚨" if pred == 1 else "Legitimate ✅"
+                is_legit = (pred == 0)
+            except Exception as e:
+                result = f"Error during prediction: {e}"
+                is_legit = None
+
+    return render_template("index.html", result=result, score=score, url=url, is_legit=is_legit)
 
 if __name__ == "__main__":
-    app.run(debug=True)
-    app.run(host="0.0.0.0", port=5000, debug=False)
-
+    # development server
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
