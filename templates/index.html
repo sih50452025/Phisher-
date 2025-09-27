@@ -5,16 +5,16 @@
   <title>Phishing Detector</title>
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #4facfe, #00f2fe);
-      --card-bg: #ffffff;
-      --primary: #4361ee;
-      --secondary: #3bc9db;
+      --bg-gradient: linear-gradient(135deg, #1a1a1a, #000000);
+      --card-bg: #121212;
+      --primary: #00b4d8;
+      --secondary: #90e0ef;
       --success: #2b9348;
-      --danger: #d00000;
-      --text-dark: #333;
-      --muted: #666;
+      --danger: #ef233c;
+      --text-dark: #e0e0e0;
+      --muted: #aaaaaa;
       --radius: 14px;
-      --shadow: 0 6px 20px rgba(0,0,0,0.12);
+      --shadow: 0 6px 20px rgba(0,0,0,0.5);
     }
     body {
       margin: 0;
@@ -25,6 +25,7 @@
       align-items: center;
       justify-content: center;
       padding: 30px;
+      color: var(--text-dark);
     }
     .container {
       background: var(--card-bg);
@@ -35,20 +36,86 @@
       padding: 40px;
       text-align: center;
     }
-    h1 { margin-top: 0; font-size: 28px; color: var(--primary); }
-    .subtitle { margin: 10px 0 30px; color: var(--muted); font-size: 15px; }
-    form { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-    input[type="text"] { flex: 1; padding: 12px 14px; border-radius: var(--radius); border: 2px solid #eee; font-size: 15px; outline: none; transition: 0.2s; }
-    input[type="text"]:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(59,201,219,0.25); }
-    button { padding: 12px 20px; border-radius: var(--radius); border: none; background: linear-gradient(90deg, var(--primary), var(--secondary)); color: white; font-weight: 600; cursor: pointer; font-size: 15px; transition: all 0.2s; }
-    button:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .result { margin-top: 20px; padding: 18px; border-radius: var(--radius); background: #f1f5f9; text-align: left; }
-    .badge { display: inline-block; padding: 8px 14px; border-radius: 999px; font-weight: 600; margin-bottom: 10px; }
-    .badge.legit { background: #d8f3dc; color: var(--success); }
-    .badge.phish { background: #ffe3e3; color: var(--danger); }
-    a.result-link { color: var(--primary); text-decoration: none; }
-    a.result-link:hover { text-decoration: underline; }
-    .meta { font-size: 14px; color: var(--muted); margin-top: 6px; }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      color: var(--primary);
+    }
+    .subtitle {
+      margin: 10px 0 30px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 2px solid #333;
+      background-color: #1e1e1e;
+      color: var(--text-dark);
+      font-size: 15px;
+      outline: none;
+      transition: 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(144,224,239,0.25);
+    }
+    button {
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      border: none;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .result {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: var(--radius);
+      background: #1e1e1e;
+      text-align: left;
+    }
+    .badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .badge.legit {
+      background: #2b9348;
+      color: #d8f3dc;
+    }
+    .badge.phish {
+      background: #ef233c;
+      color: #ffe3e3;
+    }
+    a.result-link {
+      color: var(--secondary);
+      text-decoration: none;
+    }
+    a.result-link:hover {
+      text-decoration: underline;
+    }
+    .meta {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
@@ -74,4 +141,4 @@
     {% endif %}
   </div>
 </body>
-                                 </html>
+</html>
